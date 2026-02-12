@@ -21,14 +21,8 @@ function App() {
         <Route path="/details/company" element={<CompanyMandatoryDetails />} />
         <Route path="/details/student" element={<StudentMandatoryDetails />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
-
-        {/* New Company Routes */}
         <Route path="/c/:companyId" element={<CompanyDashboard />} />
         <Route path="/c/:companyId/profile" element={<CompanyProfile />} />
-
-        {/* Redirects for Old Company Routes */}
-        <Route path="/company/dashboard" element={<Navigate to="/c/demo-company" replace />} />
-        <Route path="/company/profile" element={<Navigate to="/c/demo-company/profile" replace />} />
       </Routes>
     </Router>
   );

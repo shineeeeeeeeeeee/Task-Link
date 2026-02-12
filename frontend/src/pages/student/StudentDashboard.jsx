@@ -18,6 +18,8 @@ import {
 import InternshipCard from "../../components/InternshipCard";
 import "../../pages/student/StudentDashboard.css";
 import logo from "../../assets/logo.svg";
+import { useEffect } from "react";
+import axios from "axios";
 
 function StudentDashboard() {
   const navigate = useNavigate();
@@ -25,81 +27,243 @@ function StudentDashboard() {
   const ACCOUNT_NAME = state?.fullName || "Student";
   const ACCOUNT_EMAIL = state?.email || "student@example.com";
 
-  // Mock data - replace with DB fetch later
-  const [internships] = useState([
-    {
-      id: 1,
-      title: "Frontend Web Developer Intern",
-      company: "TechNova",
-      duration: "3 months",
-      location: "Remote",
-      stipend: "₹8,000 / month",
-      skills: ["React", "HTML", "CSS"],
-      shortDescription:
-        "Work on customer-facing interfaces using React and build responsive UI components.",
-      postedAt: "2 days ago",
-    },
-    {
-      id: 2,
-      title: "Java Back-End Intern",
-      company: "ByteWorks",
-      duration: "2 months",
-      location: "Ahmedabad",
-      stipend: "₹6,000 / month",
-      skills: ["Java", "Spring", "SQL"],
-      shortDescription:
-        "Develop REST APIs and work with relational databases. Ideal for backend enthusiasts.",
-      postedAt: "5 days ago",
-    },
-    {
-      id: 3,
-      title: "UI/UX Design Intern",
-      company: "CreativeCo",
-      duration: "1 month",
-      location: "Hybrid - Vadodara",
-      stipend: "Unpaid",
-      skills: ["Figma", "Prototyping"],
-      shortDescription:
-        "Design interfaces, create prototypes, and iterate based on user feedback.",
-      postedAt: "1 week ago",
-    },
-    {
-      id: 4,
-      title: "Fullstack Intern (MERN)",
-      company: "StackFlow Labs",
-      duration: "4 months",
-      location: "Remote",
-      stipend: "₹12,000 / month",
-      skills: ["MongoDB", "Express", "React", "Node"],
-      shortDescription:
-        "Build end-to-end features, own modules and deploy to staging environments.",
-      postedAt: "3 days ago",
-    },
-    {
-      id: 5,
-      title: "Data Science Intern",
-      company: "DataWorx",
-      duration: "3 months",
-      location: "Ahmedabad",
-      stipend: "₹10,000 / month",
-      skills: ["Python", "Pandas", "ML"],
-      shortDescription:
-        "Work on real datasets, build features and models to improve product analytics.",
-      postedAt: "4 days ago",
-    },
-    {
-      id: 6,
-      title: "DevOps Intern",
-      company: "CloudOps",
-      duration: "2 months",
-      location: "Vadodara",
-      stipend: "₹9,000 / month",
-      skills: ["Docker", "Kubernetes", "CI/CD"],
-      shortDescription:
-        "Help containerize services and maintain deployment pipelines.",
-      postedAt: "6 days ago",
-    },
-  ]);
+  // Mock data 
+  // const [internships] = useState([
+  //   {
+  //     id: 1,
+  //     title: "Frontend Web Developer Intern",
+  //     company: "TechNova",
+  //     duration: "3 months",
+  //     location: "Remote",
+  //     stipend: "₹8,000 / month",
+  //     skills: ["React", "HTML", "CSS"],
+  //     shortDescription:
+  //       "Work on customer-facing interfaces using React and build responsive UI components.",
+  //     postedAt: "2 days ago",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Java Back-End Intern",
+  //     company: "ByteWorks",
+  //     duration: "2 months",
+  //     location: "Ahmedabad",
+  //     stipend: "₹6,000 / month",
+  //     skills: ["Java", "Spring", "SQL"],
+  //     shortDescription:
+  //       "Develop REST APIs and work with relational databases. Ideal for backend enthusiasts.",
+  //     postedAt: "5 days ago",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "UI/UX Design Intern",
+  //     company: "CreativeCo",
+  //     duration: "1 month",
+  //     location: "Hybrid - Vadodara",
+  //     stipend: "Unpaid",
+  //     skills: ["Figma", "Prototyping"],
+  //     shortDescription:
+  //       "Design interfaces, create prototypes, and iterate based on user feedback.",
+  //     postedAt: "1 week ago",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Fullstack Intern (MERN)",
+  //     company: "StackFlow Labs",
+  //     duration: "4 months",
+  //     location: "Remote",
+  //     stipend: "₹12,000 / month",
+  //     skills: ["MongoDB", "Express", "React", "Node"],
+  //     shortDescription:
+  //       "Build end-to-end features, own modules and deploy to staging environments.",
+  //     postedAt: "3 days ago",
+  //   },
+  //   {
+  //     id: 5,
+  //     title: "Data Science Intern",
+  //     company: "DataWorx",
+  //     duration: "3 months",
+  //     location: "Ahmedabad",
+  //     stipend: "₹10,000 / month",
+  //     skills: ["Python", "Pandas", "ML"],
+  //     shortDescription:
+  //       "Work on real datasets, build features and models to improve product analytics.",
+  //     postedAt: "4 days ago",
+  //   },
+  //   {
+  //     id: 6,
+  //     title: "DevOps Intern",
+  //     company: "CloudOps",
+  //     duration: "2 months",
+  //     location: "Vadodara",
+  //     stipend: "₹9,000 / month",
+  //     skills: ["Docker", "Kubernetes", "CI/CD"],
+  //     shortDescription:
+  //       "Help containerize services and maintain deployment pipelines.",
+  //     postedAt: "6 days ago",
+  //   },
+  // ]);
+
+  const [internships, setInternships] = useState([]);
+  const [loading, setLoading] = useState(true);
+  // fetch internships
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Please login to access internships");
+          setLoading(false);
+          return;
+        }
+
+        const res = await axios.get("http://localhost:5001/api/jobs/open", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const jobs = (res.data.jobs || res.data).map((job) => ({
+          ...job,
+          company: "Recruiter", // temporary
+          shortDescription: job.description,
+        }));
+        
+        setInternships(jobs);
+
+      } catch (err) {
+        console.error("Failed to fetch jobs", err);
+        alert("Failed to fetch jobs. Please login again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  // fetch applied internships
+  useEffect(() => {
+    const fetchApplied = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await axios.get(
+          "http://localhost:5001/api/applications/mine",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const appliedJobIds = res.data.applications.map((app) => app.job._id);
+        setApplied(appliedJobIds);
+      } catch (err) {
+        console.error("Failed to fetch applied jobs", err);
+      }
+    };
+
+    fetchApplied();
+  }, []);
+
+  async function handleApply(internship) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login again");
+      return;
+    }
+
+    try {
+      await axios.post(
+        "http://localhost:5001/api/applications",
+        {
+          jobId: internship._id,  
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setApplied((prev) => [...prev, internship._id]);
+      alert("Applied successfully");
+    } catch (err) {
+      if (err.response?.status === 409) {
+        alert("You have already applied to this job");
+      } else {
+        alert("Failed to apply");
+      }
+      console.error(err);
+    }
+  }
+
+
+  async function handleSave(internship) {
+    const token = localStorage.getItem("token");
+    if (!token) return alert("Please login again");
+
+    try {
+      const url = saved.includes(internship._id)
+        ? `/api/saved/${internship._id}/remove`
+        : `/api/saved/${internship._id}/add`;
+
+      await axios.post(`http://localhost:5001${url}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setSaved((prev) =>
+        saved.includes(internship._id)
+          ? prev.filter((id) => id !== internship._id)
+          : [...prev, internship._id]
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update saved jobs");
+    }
+  }
+
+
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     try {
+  //       const res = await axios.get("http://localhost:5001/api/jobs");
+  //       setInternships(res.data.jobs || res.data);
+  //     } catch (err) {
+  //       console.error("Failed to fetch jobs", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  
+  //   fetchJobs();
+  // }, []);
+
+  // useEffect(() => {
+  //   const fetchApplied = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  
+  //       const res = await fetch("http://localhost:5001/api/applications/mine", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  
+  //       const data = await res.json();
+  
+  //       const appliedJobIds = data.applications.map(
+  //         (app) => app.job._id
+  //       );
+  
+  //       setApplied(appliedJobIds);
+  //     } catch (err) {
+  //       console.error("Failed to fetch applied jobs", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  
+  //   fetchApplied();
+  // }, []);  
 
   const [query, setQuery] = useState("");
   const [filterLocation, setFilterLocation] = useState("All");
@@ -159,32 +323,63 @@ function StudentDashboard() {
     return Number(num) || 0;
   }
 
-  function handleApply(internship) {
-    if (!applied.includes(internship.id)) {
-      setApplied((prev) => [...prev, internship.id]);
-    }
-    console.log("APPLY (UI-only) ->", {
-      internshipId: internship.id,
-      internshipTitle: internship.title,
-    });
-    setTimeout(
-      () =>
-        alert(
-          `Applied to ${internship.title} at ${internship.company} (UI-only)`
-        ),
-      200
-    );
-  }
+  // function handleApply(internship) {
+  //   if (!applied.includes(internship.id)) {
+  //     setApplied((prev) => [...prev, internship.id]);
+  //   }
+  //   console.log("APPLY (UI-only) ->", {
+  //     internshipId: internship.id,
+  //     internshipTitle: internship.title,
+  //   });
+  //   setTimeout(
+  //     () =>
+  //       alert(
+  //         `Applied to ${internship.title} at ${internship.company} (UI-only)`
+  //       ),
+  //     200
+  //   );
+  // }
+  // async function handleApply(internship) {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  
+  //     if (!token) {
+  //       alert("Please login again");
+  //       return;
+  //     }
+  
+  //     await axios.post(
+  //       `http://localhost:5001/api/applications/${internship._id}/apply`,
+  //       {},
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+  
+  //     setApplied((prev) => [...prev, internship._id]);
+  
+  //     alert(`Applied to ${internship.title} at ${internship.company}`);
+  //   } catch (err) {
+  //     if (err.response?.status === 409) {
+  //       alert("You have already applied to this job");
+  //     } else {
+  //       alert("Failed to apply. Try again.");
+  //     }
+  //     console.error(err);
+  //   }
+  // }  
 
-  function handleSave(internship) {
-    if (saved.includes(internship.id)) {
-      setSaved((prev) => prev.filter((id) => id !== internship.id));
-      console.log("UNSAVE (UI-only)", internship.id);
-    } else {
-      setSaved((prev) => [...prev, internship.id]);
-      console.log("SAVE (UI-only)", internship.id);
-    }
-  }
+  // function handleSave(internship) {
+  //   if (saved.includes(internship._id)) {
+  //     setSaved((prev) => prev.filter((id) => id !== internship._id));
+  //     console.log("UNSAVE (UI-only)", internship._id);
+  //   } else {
+  //     setSaved((prev) => [...prev, internship._id]);
+  //     console.log("SAVE (UI-only)", internship._id);
+  //   }
+  // }
 
   const clearFilters = useCallback(() => {
     setQuery("");
@@ -356,7 +551,9 @@ function StudentDashboard() {
               <span className="feed-meta-info">Showing {filtered.length} internships</span>
             </div>
 
-            {filtered.length === 0 ? (
+            {loading ? (
+              <p>Loading internships...</p>
+            ) : filtered.length === 0 ? (
               <div className="empty-feed">
                 <div className="empty-visual">🔍</div>
                 <h3>No internships found</h3>
@@ -370,12 +567,12 @@ function StudentDashboard() {
                 <div className="internship-grid">
                   {pageSlice.map((it) => (
                     <InternshipCard
-                      key={it.id}
+                      key={it._id}
                       internship={it}
                       onApply={handleApply}
                       onSave={handleSave}
-                      isSaved={saved.includes(it.id)}
-                      isApplied={applied.includes(it.id)}
+                      isSaved={saved.includes(it._id)}
+                      isApplied={applied.includes(it._id)}
                     />
                   ))}
                 </div>

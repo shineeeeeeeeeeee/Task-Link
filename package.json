@@ -10,5 +10,8 @@
         "frontend": "npm run dev -w frontend",
         "backend": "npm run dev -w backend",
         "start": "npm run dev --workspaces --if-present"
+    },
+    "dependencies": {
+        "cors": "^2.8.6"
     }
 }

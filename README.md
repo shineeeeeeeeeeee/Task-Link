@@ -48,3 +48,4 @@ You can run the development servers using the following scripts from the root:
 
 - **Frontend**: Configuration is located in `frontend/vite.config.js`.
 - **Backend**: Configuration and environment variables are managed in the `backend/` directory.
+

@@ -57,7 +57,14 @@ function LoginForm() {
       if (res.data.user.role === "student") {
         navigate("/student/dashboard", { state: { fullName: res.data.user.fullName, email: res.data.user.email } });
       } else if (res.data.user.role === "recruiter") {
-        navigate("/company/dashboard", { state: { fullName: res.data.user.fullName, email: res.data.user.email } });
+        //------------------------------------THIS HAS TO BE UPDATED-----------------------------------------------
+        // INSTEAD OF FULLNAME SOME UNIQUE COMPANY ID MUST BE USED TO IDENTIFY THE COMPANY.
+        const companyId = res.data.user.fullName;
+        localStorage.setItem("tasklink_company_id", companyId);
+        localStorage.setItem("tasklink_company_name", res.data.user.fullName);
+        localStorage.setItem("tasklink_company_email", res.data.user.email);
+
+        navigate(`/c/${companyId}`, { state: { fullName: res.data.user.fullName, email: res.data.user.email } });
       }
 
       // Clear form

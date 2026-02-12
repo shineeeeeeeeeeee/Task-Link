@@ -5,11 +5,12 @@ import authRoutes from "./routes/authRoutes.js";
 import { connectDB } from "./config/db.js";
 import path from "path";
 import fs from "fs";
+import jobRoutes from "./routes/jobRoutes.js";
+import applicationRoutes from "./routes/applicationRoutes.js";
 
 dotenv.config();
 const app = express();
-// ---------------------------
-// Ensure Upload Folders Exist
+
 const uploadDirs = [
     "uploads/resumes",
     "uploads/company/logos",
@@ -18,35 +19,37 @@ const uploadDirs = [
 uploadDirs.forEach((dir) => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
-// ---------------------------
-// Serve static files (uploads)
+
+// static files (uploads)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-// ---------------------------
-// Enable CORS globally
+
+// CORS globally
 app.use(
     cors({
-        origin: "http://localhost:5173", // frontend URL
-        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true,
     })
 );
-// Handle preflight requests
+// handle preflight requests
 app.options("*", cors());
-// ---------------------------
-// Middleware to parse data
+
+// middleware to parse data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// ---------------------------
-// Connect MongoDB
+
+
 connectDB();
-// ---------------------------
-// Routes (auth + uploads)
+
+// routes
 app.use("/api/auth", authRoutes);
-// ---------------------------
-// Test Route
+app.use("/api/jobs", jobRoutes);
+app.use("/api/applications", applicationRoutes);
+
+// test route
 app.get("/", (req, res) => res.send("Backend running successfully"));
-// ---------------------------
-// Server Start
+
+// start server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

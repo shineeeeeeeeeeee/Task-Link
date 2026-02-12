@@ -16,11 +16,9 @@ router.post("/login", login);
 router.post("/role", setRole);
 
 // ---------------- STUDENT ROUTE ----------------
-// Accepts a single file (resume)
 router.post("/details/student", upload.single("resumeFile"), saveStudentDetails);
 
 // ---------------- COMPANY ROUTE ----------------
-// Accepts two files (logo + company document)
 router.post(
     "/details/company",
     upload.fields([

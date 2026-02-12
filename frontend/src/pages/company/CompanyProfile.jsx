@@ -1,13 +1,10 @@
-// src/pages/company/CompanyProfile.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Globe,
     MapPin,
     Briefcase,
     User,
-    Phone,
-    Mail,
     FileText,
     Edit2,
     X,
@@ -26,40 +23,34 @@ import logo from "../../assets/logo.svg";
 
 export default function CompanyProfile() {
     const navigate = useNavigate();
-    const { state } = useLocation();
     const { companyId } = useParams();
-    // console.log("---->", companyId);
 
-    const STORAGE_KEY = `tasklink_company_profile_${companyId}`;
-
-    const DEFAULT_PROFILE = {
-        companyName: "TechFlow Solutions",
-        companyWebsite: "www.techflow.io",
-        companyIndustry: "Software Development",
+    // TASK: Profile state: dummy data for now, fetch from DB later
+    console.log("----->", companyId);
+    const [profile, setProfile] = useState({
+        companyName: "Company Name",
+        companyWebsite: "www.companyURL.com",
+        email: "company@email.com",
+        companyIndustry: "IT",
         location: "Bangalore, India",
-        contactPersonName: "Siddharth Verma",
-        phoneNumber: "+91 98765 43210",
-        aboutCompany: "TechFlow Solutions is a leading software development company specializing in cloud-native applications and AI-driven automation tools for modern enterprises.",
-        companyLogo: null,
-        companyRegistrationDocument: null,
-        email: "contact@techflow.io"
-    };
+        contactPersonName: "Company Contact Person",
+        phoneNumber: "+91 XXXXX XXXXX",
+        aboutCompany: "Company Description",
+        companyLogo: null, // path
+        companyRegistrationDocument: null // path
+    });
 
-    const [profile, setProfile] = useState(DEFAULT_PROFILE);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [formData, setFormData] = useState(DEFAULT_PROFILE);
+    const [formData, setFormData] = useState(profile);
     const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
-    // Load profile data from localStorage or state
     useEffect(() => {
-        const savedProfile = localStorage.getItem(STORAGE_KEY);
-        if (savedProfile) {
-            setProfile(JSON.parse(savedProfile));
-        } else if (state?.companyData) {
-            setProfile(state.companyData);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state.companyData));
-        }
-    }, [state, STORAGE_KEY]);
+        /*
+          TODO:
+          1) Fetch company profile using companyId
+          2) setProfile(res.data.profile)
+        */
+    }, [companyId]);
 
     const showToast = (message, type = "success") => {
         setToast({ show: true, message, type });
@@ -73,25 +64,35 @@ export default function CompanyProfile() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSaveChanges = (e) => {
         e.preventDefault();
         setProfile(formData);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+        /*
+          TODO:
+          Save updated profile in DB and also update the UI.
+        */
         setIsEditModalOpen(false);
         showToast("Profile updated successfully!");
     };
 
-    // Calculate completeness
     const calculateCompleteness = () => {
         const fields = [
-            'companyName', 'companyWebsite', 'companyIndustry', 'location',
-            'contactPersonName', 'phoneNumber', 'aboutCompany'
+            "companyName",
+            "companyWebsite",
+            "companyIndustry",
+            "location",
+            "contactPersonName",
+            "phoneNumber",
+            "aboutCompany"
         ];
-        const filledFields = fields.filter(field => profile[field] && profile[field].trim() !== "");
-        // Just count mandatory texts for now, adding logic for files if needed
+
+        const filledFields = fields.filter(
+            (field) => profile[field] && profile[field].trim() !== ""
+        );
+
         let score = filledFields.length;
         if (profile.companyLogo) score += 1;
         if (profile.companyRegistrationDocument) score += 1;
@@ -101,61 +102,70 @@ export default function CompanyProfile() {
 
     const completeness = calculateCompleteness();
 
+    {/* ------------------------------------------------------------------------------------------------------------------------------- */ }
     return (
         <div className="dashboard-wrapper">
-            {/* Toast Notification */}
+            {/* ------------------------------------------------TOAST NOTIFICATION-------------------------------------------------*/}
             {toast.show && (
-                <div className={`toast-message ${toast.type}`}>
-                    {toast.message}
-                </div>
+                <div className={`toast-message ${toast.type}`}>{toast.message}</div>
             )}
-
-            {/* HEADER (Reused from Dashboard) */}
+            {/* -----------------------------------------------------HEADER------------------------------------------------------- */}
             <header className="dashboard-header">
                 <div className="header-container">
-                    <div className="header-brand" onClick={() => navigate(`/c/${companyId}`)} style={{ cursor: 'pointer' }}>
+                    <div
+                        className="header-brand"
+                        onClick={() => navigate(`/c/${companyId}`)}
+                        style={{ cursor: "pointer" }}
+                    >
                         <img src={logo} alt="TaskLink" className="brand-logo" />
                         <h1 className="brand-name">Profile</h1>
                     </div>
+
                     <div className="header-actions">
                         <button className="btn-create" onClick={() => navigate(`/c/${companyId}`)}>
                             <ArrowLeft size={18} />
                             <span>Back to Dashboard</span>
                         </button>
+
                         <div className="user-profile">
                             <div className="user-avatar">
                                 {profile.companyName?.charAt(0) || "C"}
                             </div>
                             <div className="user-details">
-                                <span className="user-name">{profile.companyName}</span>
-                                <span className="user-role">Company Admin</span>
+                                <span className="user-name">{profile.companyName || "Company"}</span>
+                                <span className="user-role">Recruiter</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </header>
 
+            {/* ---------------------------------------------------SIDE BAR----------------------------------------------- */}
             <div className="dashboard-layout">
-                {/* Sidebar Nav (Reused) */}
                 <aside className="dashboard-sidebar">
                     <nav className="sidebar-nav">
                         <button className="nav-item" onClick={() => navigate(`/c/${companyId}`)}>
                             <LayoutDashboard size={20} />
                             <span>My Postings</span>
                         </button>
+
                         <button className="nav-item">
                             <Users size={20} />
                             <span>Applicants</span>
                         </button>
+
                         <button className="nav-item">
                             <UserCheck size={20} />
                             <span>Shortlisted</span>
                         </button>
+
                         <div className="nav-divider"></div>
+
                         <button className="nav-item active">
                             <User size={20} />
                             <span>Company Profile</span>
                         </button>
+
                         <button className="nav-item">
                             <HelpCircle size={20} />
                             <span>Help Center</span>
@@ -165,17 +175,16 @@ export default function CompanyProfile() {
                     <div className="company-mini-card">
                         <div className="mini-avatar">🏢</div>
                         <div className="mini-info">
-                            <h4>{profile.companyName}</h4>
-                            <p>{profile.email || "admin@tasklink.com"}</p>
+                            <h4>{profile.companyName || "Company"}</h4>
+                            <p>{profile.email || "recruiter@tasklink.com"}</p>
                         </div>
                     </div>
                 </aside>
 
-                {/* Main Content Area */}
+                {/* ----------------------------------------------MAIN CONTENT------------------------------------------- */}
                 <main className="dashboard-content">
                     <div className="profile-container">
-
-                        {/* Top Profile Card */}
+                        {/* ----------------------------------------------TOP PROFILE CARD------------------------------------------- */}
                         <section className="profile-hero-card">
                             <div className="hero-content">
                                 <div className="profile-logo-container">
@@ -187,6 +196,7 @@ export default function CompanyProfile() {
                                         </div>
                                     )}
                                 </div>
+
                                 <div className="hero-details">
                                     <div className="name-row">
                                         <h2>{profile.companyName}</h2>
@@ -194,15 +204,29 @@ export default function CompanyProfile() {
                                             <CheckCircle size={14} /> Verified
                                         </span>
                                     </div>
+
                                     <p className="hero-industry">
                                         <Briefcase size={14} /> {profile.companyIndustry}
                                     </p>
+
                                     <div className="hero-meta">
-                                        <span><Globe size={14} /> <a href={`https://${profile.companyWebsite}`} target="_blank" rel="noreferrer">{profile.companyWebsite}</a></span>
-                                        <span><MapPin size={14} /> {profile.location}</span>
+                                        <span>
+                                            <Globe size={14} />{" "}
+                                            <a
+                                                href={`https://${profile.companyWebsite}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                {profile.companyWebsite}
+                                            </a>
+                                        </span>
+                                        <span>
+                                            <MapPin size={14} /> {profile.location}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
+
                             <div className="hero-actions">
                                 <button className="btn-edit-profile" onClick={handleOpenEditModal}>
                                     <Edit2 size={16} /> Edit Profile
@@ -210,27 +234,34 @@ export default function CompanyProfile() {
                             </div>
                         </section>
 
-                        {/* Completeness Bar */}
+                        {/* ----------------------------------------------COMPLETENESS BAR------------------------------------------- */}
                         <section className="completeness-section">
                             <div className="completeness-header">
                                 <span>Profile Completeness</span>
                                 <span>{completeness}%</span>
                             </div>
                             <div className="progress-bar-bg">
-                                <div className="progress-bar-fill" style={{ width: `${completeness}%` }}></div>
+                                <div
+                                    className="progress-bar-fill"
+                                    style={{ width: `${completeness}%` }}
+                                ></div>
                             </div>
                         </section>
 
                         <div className="profile-grid">
-                            {/* Left Column: About & Basic Info */}
+                            {/* -------------------------------------LEFT COLUMN--------------------------------------- */}
                             <div className="profile-col-main">
                                 <div className="profile-info-card">
-                                    <h3><FileText size={18} /> About Company</h3>
+                                    <h3>
+                                        <FileText size={18} /> About Company
+                                    </h3>
                                     <p className="about-text">{profile.aboutCompany}</p>
                                 </div>
 
                                 <div className="profile-info-card">
-                                    <h3><Briefcase size={18} /> Company Details</h3>
+                                    <h3>
+                                        <Briefcase size={18} /> Company Details
+                                    </h3>
                                     <div className="details-list">
                                         <div className="detail-item">
                                             <label>Industry Type</label>
@@ -248,10 +279,12 @@ export default function CompanyProfile() {
                                 </div>
                             </div>
 
-                            {/* Right Column: Contact & Documents */}
+                            {/* -------------------------------------RIGHT COLUMN--------------------------------------- */}
                             <div className="profile-col-side">
                                 <div className="profile-info-card">
-                                    <h3><User size={18} /> Contact Person</h3>
+                                    <h3>
+                                        <User size={18} /> Contact Person
+                                    </h3>
                                     <div className="details-list">
                                         <div className="detail-item">
                                             <label>Name</label>
@@ -269,7 +302,9 @@ export default function CompanyProfile() {
                                 </div>
 
                                 <div className="profile-info-card">
-                                    <h3><FileText size={18} /> Official Documents</h3>
+                                    <h3>
+                                        <FileText size={18} /> Official Documents
+                                    </h3>
                                     <div className="document-list">
                                         <div className="doc-item">
                                             <div className="doc-icon pdf">PDF</div>
@@ -281,6 +316,7 @@ export default function CompanyProfile() {
                                                 <Download size={16} />
                                             </button>
                                         </div>
+
                                         <div className="doc-item">
                                             <div className="doc-icon img">PNG</div>
                                             <div className="doc-info">
@@ -298,11 +334,16 @@ export default function CompanyProfile() {
                     </div>
                 </main>
             </div>
+            {/* ------------------------------------------------------------------------------------------------------------------------------- */}
 
-            {/* EDIT PROFILE MODAL */}
+
+            {/* ------------------------------------------------EDIT PROFILE------------------------------------------------- */}
             {isEditModalOpen && (
                 <div className="modal-backdrop" onClick={() => setIsEditModalOpen(false)}>
-                    <div className="modal-content profile-modal" onClick={(e) => e.stopPropagation()}>
+                    <div
+                        className="modal-content profile-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="modal-header">
                             <h2>Edit Company Profile</h2>
                             <button className="close-btn" onClick={() => setIsEditModalOpen(false)}>
@@ -391,7 +432,11 @@ export default function CompanyProfile() {
                             </div>
 
                             <div className="modal-footer">
-                                <button type="button" className="btn-ghost" onClick={() => setIsEditModalOpen(false)}>
+                                <button
+                                    type="button"
+                                    className="btn-ghost"
+                                    onClick={() => setIsEditModalOpen(false)}
+                                >
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn-primary">
@@ -402,6 +447,7 @@ export default function CompanyProfile() {
                     </div>
                 </div>
             )}
+            {/* ------------------------------------------------------------------------------------------------------------- */}
         </div>
     );
 }

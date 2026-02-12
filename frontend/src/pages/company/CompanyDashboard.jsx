@@ -1,6 +1,5 @@
-// src/pages/company/CompanyDashboard.jsx
-import React, { useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Plus,
   MapPin,
@@ -22,6 +21,8 @@ import {
 import "../../pages/company/CompanyDashboard.css";
 import logo from "../../assets/logo.svg";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001"; // PORT 5001 IN DHRUVIL / PORT 5000 IN SHINE
+
 const INITIAL_FORM_STATE = {
   title: "",
   location: "",
@@ -33,11 +34,13 @@ const INITIAL_FORM_STATE = {
 
 export default function CompanyDashboard() {
   const navigate = useNavigate();
-  const { state } = useLocation();
   const { companyId } = useParams();
 
-  const ACCOUNT_NAME = state?.fullName || "Company Admin";
-  const ACCOUNT_EMAIL = state?.email || "recruiter@tasklink.com";
+  // Company Identity State (Dummy for now)
+  const [companyInfo, setCompanyInfo] = useState({
+    companyName: "Company Name",
+    companyEmail: "company@email.com",
+  });
 
   // State Management
   const [showForm, setShowForm] = useState(false);
@@ -48,32 +51,51 @@ export default function CompanyDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
-  const [postings, setPostings] = useState([
-    {
-      id: 1,
-      title: "Senior Java Developer Intern",
-      applicants: 12,
-      location: "Ahmedabad, IN",
-      stipend: "₹15,000 / month",
-      duration: "6 months",
-      status: "Open",
-      description: "Looking for a passionate Java developer to join our backend team.",
-      skills: ["Java", "Spring Boot", "MySQL"]
-    },
-    {
-      id: 2,
-      title: "Frontend UI/UX Intern (React)",
-      applicants: 7,
-      location: "Remote",
-      stipend: "₹10,000 / month",
-      duration: "3 months",
-      status: "Reviewing",
-      description: "Help us build the next generation of our user interface using React and modern CSS.",
-      skills: ["React", "CSS3", "Figma"]
-    },
-  ]);
+  const [postings, setPostings] = useState([]);
 
-  // Dummy data for applicants
+  // Fetch company info logic
+  useEffect(() => {
+    // TODO: Fetch company basic details using companyId from backend.
+  }, [companyId]);
+
+  // Fetch job postings
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/jobs/mine`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const mapped = (data.jobs || []).map((j) => ({
+          id: j._id,
+          title: j.title,
+          applicants: j.applicantsCount || 0,
+          location: j.location,
+          stipend: j.stipend || "",
+          duration: j.duration,
+          status: j.status || "Open",
+          description: j.description,
+          skills: j.skills || [],
+          postedAt: j.postedAt,
+        }));
+        setPostings(mapped);
+      } catch (e) {
+        console.error("Failed to load jobs:", e);
+        showToast("Failed to load jobs", "error");
+      }
+    })();
+  }, []);
+
+  // Initials logic for company avatar
+  const getCompanyInitials = (name) => {
+    // Return image file here.
+    return name.charAt(0).toUpperCase();
+  };
+
+  // Dummy data 
   const applicants = [
     {
       id: 101,
@@ -90,18 +112,9 @@ export default function CompanyDashboard() {
       skills: ["Java", "React", "Node.js", "MongoDB"],
       resume: "#",
       shortlisted: true,
-    },
-    {
-      id: 103,
-      name: "Anjali Sharma",
-      college: "GSFC University",
-      skills: ["Python", "Django", "React"],
-      resume: "#",
-      shortlisted: false,
     }
   ];
 
-  // Helper Functions
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3000);
@@ -129,18 +142,39 @@ export default function CompanyDashboard() {
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this internship posting?")) {
-      setPostings(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this internship posting?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/api/jobs/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setPostings((prev) => prev.filter((p) => p.id !== id));
       showToast("Internship deleted successfully", "success");
+    } catch (e) {
+      console.error("Delete failed:", e);
+      showToast("Delete failed", "error");
     }
   };
 
-  const toggleStatus = (id) => {
-    setPostings(prev => prev.map(p =>
-      p.id === id ? { ...p, status: p.status === "Open" ? "Closed" : "Open" } : p
-    ));
-    showToast("Status updated");
+  const toggleStatus = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/api/jobs/${id}/status`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      const j = data.job;
+      setPostings((prev) => prev.map((p) => (p.id === id ? { ...p, status: j.status } : p)));
+      showToast("Status updated");
+    } catch (e) {
+      console.error("Status update failed:", e);
+      showToast("Status update failed", "error");
+    }
   };
 
   const validate = () => {
@@ -160,42 +194,77 @@ export default function CompanyDashboard() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
+    const token = localStorage.getItem("token");
+    const payload = {
+      title: formData.title,
+      location: formData.location,
+      duration: formData.duration,
+      stipend: formData.stipend,
+      description: formData.description,
+      skills: formData.skills,
+    };
 
-    // Simulate API delay
-    setTimeout(() => {
-      if (isEditing) {
-        setPostings(prev => prev.map(p =>
+    try {
+      if (isEditing && currentEditId) {
+        const res = await fetch(`${API_BASE}/api/jobs/${currentEditId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const j = data.job;
+        setPostings((prev) => prev.map((p) =>
           p.id === currentEditId
             ? {
               ...p,
-              ...formData,
-              skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean)
+              title: j.title,
+              location: j.location,
+              duration: j.duration,
+              stipend: j.stipend || "",
+              description: j.description,
+              skills: j.skills || [],
             }
             : p
         ));
         showToast("Internship updated successfully");
       } else {
+        const res = await fetch(`${API_BASE}/api/jobs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const j = data.job;
         const newPost = {
-          ...formData,
-          id: Date.now(),
-          applicants: 0,
-          status: "Open",
-          skills: formData.skills.split(",").map(s => s.trim()).filter(Boolean),
-          postedAt: new Date().toISOString(),
+          id: j._id,
+          title: j.title,
+          applicants: j.applicantsCount || 0,
+          location: j.location,
+          stipend: j.stipend || "",
+          duration: j.duration,
+          status: j.status || "Open",
+          description: j.description,
+          skills: j.skills || [],
+          postedAt: j.postedAt,
         };
-        setPostings(prev => [newPost, ...prev]);
+        setPostings((prev) => [newPost, ...prev]);
         showToast("Internship posted successfully");
       }
-
       setShowForm(false);
       resetForm();
+    } catch (e) {
+      console.error("Save failed:", e);
+      showToast("Save failed", "error");
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   return (
@@ -221,10 +290,10 @@ export default function CompanyDashboard() {
             </button>
             <div className="user-profile" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
               <div className="user-avatar">
-                {ACCOUNT_NAME.split(" ").map(n => n[0]).join("")}
+                {getCompanyInitials(companyInfo.companyName)}
               </div>
               <div className="user-details">
-                <span className="user-name">{ACCOUNT_NAME}</span>
+                <span className="user-name">{companyInfo.companyName}</span>
                 <span className="user-role">Recruiter</span>
               </div>
             </div>
@@ -258,8 +327,8 @@ export default function CompanyDashboard() {
           <div className="company-mini-card" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
             <div className="mini-avatar">🏢</div>
             <div className="mini-info">
-              <h4>{ACCOUNT_NAME}</h4>
-              <p>{ACCOUNT_EMAIL}</p>
+              <h4>{companyInfo.companyName}</h4>
+              <p>{companyInfo.companyEmail}</p>
             </div>
           </div>
         </aside>

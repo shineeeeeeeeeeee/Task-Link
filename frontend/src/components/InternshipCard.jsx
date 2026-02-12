@@ -19,7 +19,7 @@ export default function InternshipCard({
   isApplied = false
 }) {
   const {
-    id,
+    _id,
     title,
     company,
     location,
@@ -35,12 +35,12 @@ export default function InternshipCard({
   const remainingSkills = skills.length - 3;
 
   return (
-    <article className="internship-card" aria-labelledby={`intern-title-${id}`}>
+    <article className="internship-card" aria-labelledby={`intern-title-${_id}`}>
       {/* Top section: Branding and Status */}
       <div className="card-top">
         <div className="company-branding">
           <span className="company-name">{company}</span>
-          <h3 id={`intern-title-${id}`} className="internship-title">{title}</h3>
+          <h3 id={`intern-title-${_id}`} className="internship-title">{title}</h3>
         </div>
         <div className="card-badges">
           <span className="posted-at">{postedAt}</span>
