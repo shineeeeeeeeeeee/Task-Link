@@ -1,6 +1,6 @@
 // src/pages/company/CompanyDashboard.jsx
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   Plus,
   MapPin,
@@ -34,6 +34,8 @@ const INITIAL_FORM_STATE = {
 export default function CompanyDashboard() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const { companyId } = useParams();
+
   const ACCOUNT_NAME = state?.fullName || "Company Admin";
   const ACCOUNT_EMAIL = state?.email || "recruiter@tasklink.com";
 
@@ -217,7 +219,7 @@ export default function CompanyDashboard() {
               <Plus size={18} />
               <span>Post Internship</span>
             </button>
-            <div className="user-profile">
+            <div className="user-profile" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
               <div className="user-avatar">
                 {ACCOUNT_NAME.split(" ").map(n => n[0]).join("")}
               </div>
@@ -234,7 +236,7 @@ export default function CompanyDashboard() {
         {/* Sidebar Nav */}
         <aside className="dashboard-sidebar">
           <nav className="sidebar-nav">
-            <button className="nav-item active">
+            <button className="nav-item active" onClick={() => navigate(`/c/${companyId}`)}>
               <LayoutDashboard size={20} />
               <span>My Postings</span>
             </button>
@@ -253,7 +255,7 @@ export default function CompanyDashboard() {
             </button>
           </nav>
 
-          <div className="company-mini-card">
+          <div className="company-mini-card" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
             <div className="mini-avatar">🏢</div>
             <div className="mini-info">
               <h4>{ACCOUNT_NAME}</h4>

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -7,6 +7,7 @@ import CompanyMandatoryDetails from "./pages/auth/CompanyMandatoryDetails";
 import StudentMandatoryDetails from "./pages/auth/StudentMandatoryDetails";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import CompanyDashboard from "./pages/company/CompanyDashboard";
+import CompanyProfile from "./pages/company/CompanyProfile";
 import './App.css';
 
 function App() {
@@ -20,7 +21,14 @@ function App() {
         <Route path="/details/company" element={<CompanyMandatoryDetails />} />
         <Route path="/details/student" element={<StudentMandatoryDetails />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/company/dashboard" element={<CompanyDashboard />} />
+
+        {/* New Company Routes */}
+        <Route path="/c/:companyId" element={<CompanyDashboard />} />
+        <Route path="/c/:companyId/profile" element={<CompanyProfile />} />
+
+        {/* Redirects for Old Company Routes */}
+        <Route path="/company/dashboard" element={<Navigate to="/c/demo-company" replace />} />
+        <Route path="/company/profile" element={<Navigate to="/c/demo-company/profile" replace />} />
       </Routes>
     </Router>
   );
