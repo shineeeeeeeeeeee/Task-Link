@@ -20,6 +20,7 @@ import {
 import "../../pages/company/CompanyProfile.css";
 import "../../pages/company/CompanyDashboard.css";
 import logo from "../../assets/logo.svg";
+import axios from "axios";
 
 export default function CompanyProfile() {
     const navigate = useNavigate();
@@ -45,12 +46,39 @@ export default function CompanyProfile() {
     const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
     useEffect(() => {
-        /*
-          TODO:
-          1) Fetch company profile using companyId
-          2) setProfile(res.data.profile)
-        */
-    }, [companyId]);
+        const fetchProfile = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+    
+            try {
+                const { data } = await axios.get(
+                    "http://localhost:5001/api/auth/profile/company",
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+    
+                if (data?.company) {
+                    setProfile({
+                        companyName: data.company.companyName || "",
+                        companyWebsite: data.company.website || "",
+                        email: data.company.email || "",
+                        companyIndustry: data.company.companyType || "",
+                        location: data.company.location || "",
+                        contactPersonName: data.company.contactPerson || "",
+                        phoneNumber: data.company.contactPhone || "",
+                        aboutCompany: data.company.description || "",
+                        companyLogo: data.company.logoPath || null,
+                        companyRegistrationDocument: data.company.docPath || null,
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch company profile:", err);
+            }
+        };
+    
+        fetchProfile();
+    }, [companyId]);    
 
     const showToast = (message, type = "success") => {
         setToast({ show: true, message, type });
@@ -67,16 +95,40 @@ export default function CompanyProfile() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSaveChanges = (e) => {
+    const handleSaveChanges = async (e) => {
         e.preventDefault();
-        setProfile(formData);
-        /*
-          TODO:
-          Save updated profile in DB and also update the UI.
-        */
-        setIsEditModalOpen(false);
-        showToast("Profile updated successfully!");
+        const token = localStorage.getItem("token");
+        if (!token) return showToast("Please login again", "error");
+    
+        try {
+            const formPayload = {
+                email: profile.email || "default@example.com", 
+                companyName: formData.companyName,
+                website: formData.companyWebsite,
+                companyType: formData.companyIndustry,
+                location: formData.location,
+                contactPerson: formData.contactPersonName,
+                contactPhone: formData.phoneNumber,
+                description: formData.aboutCompany
+            };
+    
+            const { data } = await axios.post(
+                "http://localhost:5001/api/auth/details/company",
+                formPayload,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+    
+            // SAFETY: fallback 
+            setProfile(data.company || { ...profile, ...formData });
+    
+            setIsEditModalOpen(false);
+            showToast("Profile updated successfully!");
+        } catch (err) {
+            console.error(err);
+            showToast(err.response?.data?.message || "Failed to update profile", "error");
+        }
     };
+    
 
     const calculateCompleteness = () => {
         const fields = [
@@ -188,12 +240,14 @@ export default function CompanyProfile() {
                         <section className="profile-hero-card">
                             <div className="hero-content">
                                 <div className="profile-logo-container">
-                                    {profile.companyLogo ? (
-                                        <img src={URL.createObjectURL(profile.companyLogo)} alt="Logo" />
+                                    {profile.logoPath ? (
+                                        <img
+                                            src={`http://localhost:5001${profile.logoPath}`}
+                                            alt="Logo"
+                                            className="company-logo"
+                                        />
                                     ) : (
-                                        <div className="logo-placeholder">
-                                            {profile.companyName?.charAt(0) || "🏢"}
-                                        </div>
+                                        <div className="logo-placeholder">{profile.companyName?.charAt(0) || "🏢"}</div>
                                     )}
                                 </div>
 
@@ -306,27 +360,54 @@ export default function CompanyProfile() {
                                         <FileText size={18} /> Official Documents
                                     </h3>
                                     <div className="document-list">
-                                        <div className="doc-item">
-                                            <div className="doc-icon pdf">PDF</div>
-                                            <div className="doc-info">
-                                                <p>Registration Document</p>
-                                                <span>Verified • {new Date().toLocaleDateString()}</span>
-                                            </div>
-                                            <button className="doc-btn" title="Download">
-                                                <Download size={16} />
-                                            </button>
+                                    <div className="doc-item">
+                                        <div className="doc-icon pdf">PDF</div>
+                                        <div className="doc-info">
+                                            <p>Registration Document</p>
+                                            <span>
+                                                {profile.companyRegistrationDocument
+                                                    ? `Verified • ${new Date().toLocaleDateString()}`
+                                                    : "Not uploaded"}
+                                            </span>
                                         </div>
+                                        <button
+                                            className="doc-btn"
+                                            title={profile.companyRegistrationDocument ? "Open Document" : "No document uploaded"}
+                                            onClick={() => {
+                                                if (profile.companyRegistrationDocument) {
+                                                    window.open(`http://localhost:5001${profile.companyRegistrationDocument}`, "_blank");
+                                                } else {
+                                                    showToast("No document uploaded", "error");
+                                                }
+                                            }}
+                                        >
+                                            <Download size={16} />
+                                        </button>
+                                    </div>
 
-                                        <div className="doc-item">
-                                            <div className="doc-icon img">PNG</div>
-                                            <div className="doc-info">
-                                                <p>Company Logo</p>
-                                                <span>Primary Brand Asset</span>
-                                            </div>
-                                            <button className="doc-btn" title="View">
-                                                <ExternalLink size={16} />
-                                            </button>
+                                    <div className="doc-item">
+                                        <div className="doc-icon img">IMG</div>
+                                        <div className="doc-info">
+                                            <p>Company Logo</p>
+                                            <span>
+                                                {profile.companyLogo ? "Primary Brand Asset" : "Not uploaded"}
+                                            </span>
                                         </div>
+                                        <button
+                                            className="doc-btn"
+                                            title={profile.companyLogo ? "View Logo" : "No logo uploaded"}
+                                            onClick={() => {
+                                                if (profile.companyLogo) {
+                                                    window.open(`http://localhost:5001${profile.companyLogo}`, "_blank");
+                                                } else {
+                                                    showToast("No logo uploaded", "error");
+                                                }
+                                            }}
+                                        >
+                                            <ExternalLink size={16} />
+                                        </button>
+                                    </div>
+
                                     </div>
                                 </div>
                             </div>

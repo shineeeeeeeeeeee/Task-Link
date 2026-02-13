@@ -55,8 +55,32 @@ export default function CompanyDashboard() {
 
   // Fetch company info logic
   useEffect(() => {
-    // TODO: Fetch company basic details using companyId from backend.
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/profile/company`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+
+        if (data?.company) {
+          setCompanyInfo({
+            companyName: data.company.companyName || "Company",
+            companyEmail: data.company.email || "recruiter@tasklink.com",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch company info:", err);
+        showToast("Failed to load company info", "error");
+      }
+    })();
   }, [companyId]);
+
 
   // Fetch job postings
   useEffect(() => {
@@ -289,9 +313,10 @@ export default function CompanyDashboard() {
               <span>Post Internship</span>
             </button>
             <div className="user-profile" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
-              <div className="user-avatar">
-                {getCompanyInitials(companyInfo.companyName)}
-              </div>
+            <div className="user-avatar">
+              {getCompanyInitials(companyInfo.companyName)}
+            </div>
+
               <div className="user-details">
                 <span className="user-name">{companyInfo.companyName}</span>
                 <span className="user-role">Recruiter</span>
@@ -327,8 +352,8 @@ export default function CompanyDashboard() {
           <div className="company-mini-card" onClick={() => navigate(`/c/${companyId}/profile`)} style={{ cursor: "pointer" }}>
             <div className="mini-avatar">🏢</div>
             <div className="mini-info">
-              <h4>{companyInfo.companyName}</h4>
-              <p>{companyInfo.companyEmail}</p>
+            <h4>{companyInfo.companyName}</h4>
+            <p>{companyInfo.companyEmail}</p>
             </div>
           </div>
         </aside>

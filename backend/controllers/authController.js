@@ -144,10 +144,10 @@ export const saveCompanyDetails = async (req, res) => {
         const resolvedWebsite = website || companyWebsite || "";
 
         const logoPath = req.files?.companyLogo
-            ? `/uploads/company/${req.files.companyLogo[0].filename}`
+            ? `/uploads/company/logos/${req.files.companyLogo[0].filename}`
             : "";
         const docPath = req.files?.companyDocument
-            ? `/uploads/company/${req.files.companyDocument[0].filename}`
+            ? `/uploads/company/docs/${req.files.companyDocument[0].filename}`
             : "";
 
         const user = await User.findOne({ email: email.toLowerCase() });
