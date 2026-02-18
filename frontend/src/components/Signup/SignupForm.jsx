@@ -59,7 +59,12 @@ function SignupForm() {
 
       try {
         // Send signup data to backend
-        await axios.post("http://localhost:5001/api/auth/signup", userData);
+        const res = await axios.post(
+          "http://localhost:5001/api/auth/signup",
+          userData
+        );
+        
+        sessionStorage.setItem("token", res.data.token);
 
         // Clear form and states
         setFormData({ fullname: "", email: "", password: "", retypedPassword: "" });

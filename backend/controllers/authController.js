@@ -24,10 +24,22 @@ export const signup = async (req, res) => {
 
         await user.save();
 
+        const payload = { id: user._id, role: user.role, email: user.email };
+
+        const token = jwt.sign(payload, JWT_SECRET, {
+            expiresIn: process.env.JWT_EXPIRES || "2h",
+        });
+
         return res.status(201).json({
             message: "User created successfully",
-            user: { email: user.email, fullName: user.fullName },
+            token,
+            user: {
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+            },
         });
+
     } catch (err) {
         console.error("Signup Error:", err);
         return res.status(500).json({ message: "Server error" });

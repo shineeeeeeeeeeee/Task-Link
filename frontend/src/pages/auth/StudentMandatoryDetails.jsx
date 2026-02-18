@@ -88,13 +88,19 @@ function StudentMandatoryDetails() {
     if (resumeFile) data.append("resumeFile", resumeFile);
 
     try {
+      const token = sessionStorage.getItem("token");
+
       const res = await axios.post(
         "http://localhost:5001/api/auth/details/student",
         data,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
+      
       console.log(res.data);
       alert("Student details saved successfully!");
       navigate("/login");

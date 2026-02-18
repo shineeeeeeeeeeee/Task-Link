@@ -48,7 +48,42 @@ export default function StudentProfile() {
     const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
     useEffect(() => {
-        // TODO: Fetch student profile from backend
+        const token = sessionStorage.getItem("token");
+        if (!token) return;
+    
+        (async () => {
+            try {
+                const res = await fetch("http://localhost:5001/api/auth/profile/student", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+    
+                const data = await res.json();
+    
+                if (data?.student) {
+                    const s = data.student;
+                
+                    setProfile({
+                        firstName: s.name?.firstName || "",
+                        middleName: s.name?.middleName || "",
+                        lastName: s.name?.lastName || "",
+                        email: s.contact?.email || "",
+                        country: s.contact?.country || "",
+                        address: s.contact?.address || "",
+                        phoneNumber: s.contact?.phone || "",
+                        skills: s.skills || [],
+                        resumeFileName: s.resumePath || "",
+                        resumeUrl: s.resumePath
+                            ? `http://localhost:5001${s.resumePath.startsWith("/") ? "" : "/"}${s.resumePath}`
+                            : "",
+                        college: s.college || "",
+                        branch: s.branch || "",
+                        semester: s.semester || "",
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch student profile:", err);
+            }
+        })();
     }, [student_id]);
 
     const showToast = (message, type = "success") => {
@@ -72,17 +107,61 @@ export default function StudentProfile() {
         setFormData(prev => ({ ...prev, skills: skillsArray }));
     };
 
-    const handleSaveChanges = (e) => {
+    const handleSaveChanges = async (e) => {
         e.preventDefault();
-        // TODO: Save updated student profile to backend
-        setProfile(formData);
-        setIsEditModalOpen(false);
-        showToast("Profile updated successfully!");
+    
+        const token = sessionStorage.getItem("token");
+        if (!token) return;
+    
+        try {
+            const res = await fetch("http://localhost:5001/api/auth/details/student", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(formData),
+            });
+    
+            const data = await res.json();
+    
+            if (!res.ok) {
+                showToast(data.message || "Update failed", "error");
+                return;
+            }
+    
+            const s = data.student;
+
+            setProfile({
+            firstName: s.name?.firstName || "",
+            middleName: s.name?.middleName || "",
+            lastName: s.name?.lastName || "",
+            email: s.contact?.email || "",
+            country: s.contact?.country || "",
+            address: s.contact?.address || "",
+            phoneNumber: s.contact?.phone || "",
+            skills: s.skills || [],
+            resumeFileName: s.resumePath || "",
+            resumeUrl: s.resumePath
+                ? `http://localhost:5001${s.resumePath.startsWith("/") ? "" : "/"}${s.resumePath}`
+                : "",
+            college: s.college || "",
+            branch: s.branch || "",
+            semester: s.semester || "",
+            });
+            setIsEditModalOpen(false);
+            showToast("Profile updated successfully!");
+        } catch (err) {
+            console.error("Update error:", err);
+            showToast("Server error", "error");
+        }
     };
 
     const calculateCompleteness = () => {
         const fields = ["firstName", "lastName", "email", "country", "address", "phoneNumber", "college", "branch", "semester"];
-        const filledFields = fields.filter((field) => profile[field] && profile[field].trim() !== "");
+        const filledFields = fields.filter((field) =>
+            profile[field] && String(profile[field]).trim() !== ""
+        );
         let score = filledFields.length;
         if (profile.skills && profile.skills.length > 0) score += 1;
         if (profile.resumeUrl) score += 1;
@@ -255,7 +334,7 @@ export default function StudentProfile() {
                                         <div className="doc-item">
                                             <div className="doc-icon pdf">PDF</div>
                                             <div className="doc-info">
-                                                <p>{profile.resumeFileName || "Not uploaded"}</p>
+                                                <p>{profile.resumeUrl ? "Resume" : "Not uploaded"}</p>
                                                 <span>{profile.resumeUrl ? "Uploaded Document" : "Not uploaded"}</span>
                                             </div>
                                             <button className="doc-btn" onClick={() => profile.resumeUrl && window.open(profile.resumeUrl, "_blank")}>

@@ -28,6 +28,12 @@ const StudentSchema = new mongoose.Schema(
     },
     skills: { type: [String], default: [] },
     resumePath: { type: String, default: "" },
+
+    // new fields
+
+    college: { type: String, default: "" },
+    branch: { type: String, default: "" },
+    semester: { type: String, default: "" },
   },
   { timestamps: true }
 );
